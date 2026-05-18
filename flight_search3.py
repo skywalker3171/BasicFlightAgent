@@ -19,16 +19,19 @@ TODAY = date.today().isoformat()
 
 def get_date_range(return_date_str: str) -> list[str]:
     """Generate date range: ±2 days around return_date."""
+    # Parse the input date string and generate a list of 5 dates (2 days before and after the target date)
     return_date = datetime.strptime(return_date_str, '%Y-%m-%d')
     return [(return_date + relativedelta(days=i)).strftime('%Y-%m-%d') for i in [-2, -1, 0, 1, 2]]
 
 def truncate_scratchpad(scratchpad: str, max_chars: int = 24000) -> str:
     """Keep only the last max_chars if scratchpad exceeds limit."""
+    # Prevent memory overflow by truncating the scratchpad to maintain recent context only
     return scratchpad if len(scratchpad) <= max_chars else f"...(truncated)...\n{scratchpad[-max_chars:]}"
 
 def search_rapidapi_flights2(origin_code: str, destination_code: str, departure_date: str, 
                              max_offers: int = 2, retries: int = 3, backoff: int = 2) -> dict | str:
     """Search flights via RapidAPI with exponential backoff retry logic."""
+    # Query the flights-sky API for available flights and automatically retry on connection failures
     url = f"https://flights-sky.p.rapidapi.com/flights/search-one-way?fromEntityId={origin_code}&toEntityId={destination_code}&departDate={departure_date}"
     headers = {
         "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY", "XXX"),
@@ -86,6 +89,7 @@ def build_prompt(question: str, scratchpad: str = "") -> str:
     tools_desc = "\n".join(
         f"- {name}: {info['description']}" for name, info in TOOLS.items()
     )
+    # Construct the ReAct prompt by formatting the template with available tools, question, and agent scratchpad
     tool_names = ", ".join(TOOLS.keys())
     return REACT_PROMPT.format(
         tools=tools_desc,
@@ -98,6 +102,7 @@ def build_prompt(question: str, scratchpad: str = "") -> str:
 
 def parse_action(text: str) -> tuple[str | None, dict | str | None]:
     """Extract Action and Action Input from LLM output."""
+    # Parse the LLM response to extract action names and their input parameters in JSON or key=value format
     action_match = re.search(r"Action:\s*(.+?)$", text, re.MULTILINE)
     input_match = re.search(r"Action Input:\s*(\{.*?\}|[^\n]+)", text)
 
@@ -123,6 +128,7 @@ def parse_action(text: str) -> tuple[str | None, dict | str | None]:
 
 def parse_final_answer(text: str) -> str | None:
     """Extract Final Answer from LLM output if present."""
+    # Search for and extract the final answer section from the LLM's response
     match = re.search(r"Final Answer:\s*(.+?)(?=\n|$)", text)
     return match.group(1).strip() if match else None
 
@@ -130,6 +136,7 @@ def parse_final_answer(text: str) -> str | None:
 
 def run_agent(question: str, max_steps: int = 5) -> str:
     """Run ReAct agent loop."""
+    # Execute the agent loop for up to max_steps iterations, calling tools as needed until a final answer is reached
     scratchpad = ""
 
     for step in range(max_steps):
