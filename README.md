@@ -51,3 +51,7 @@ flight_search3.py   # All logic in one file: tools, ReAct loop, parser, entry po
 ## Limitations
 
 The parser expects the LLM to output well-formed `Action Input` as JSON or `key=value` pairs; weaker models occasionally deviate. The `get_date_range` helper is implemented but not yet used — it's ready for a ±2-day flexible search feature.
+
+## Blogpost
+
+There is a more general explanation of this project on [Wordpress](https://skywalker3171.wordpress.com/2026/05/18/building-a-react-flight-search-agent-from-scratch/)
